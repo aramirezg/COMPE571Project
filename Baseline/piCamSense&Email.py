@@ -49,8 +49,8 @@ def picture():
 
 def email():
 
-    mailUser='aswagisrad@gmail.com'
-    mailSender='aswagisrad@gmail.com'
+    mailUser='compe571rpialerts@gmail.com'
+    mailSender='compe571rpialerts@gmail.com'
     subject='Alert!!'
 
 #MIME library formats from,to,and subject in email from variables above
@@ -83,7 +83,7 @@ def email():
     text = message.as_string()
     server = smtplib.SMTP('smtp.gmail.com',587)
     server.starttls()
-    server.login(mailUser,'GOgoopy0926')
+    server.login(mailUser,'compe571project')
 
 
     server.sendmail(mailUser,mailSender,text)
@@ -108,13 +108,17 @@ if __name__ == '__main__':
                     picture() #calls picture() method
                     print("Sending email alert with pic to user")
                     email() #calls email() method
+
+
                     snapFlag = 1
+                    execTime = time.time()
+                    print("Execution Time = %d", execTime/1000)
 
 
                 elif snapFlag == 1:
-                    print("Snap Flag value is", snapFlag)
-                    time.sleep(30)
-                    snapFlag = 0;
+                    print("Snap Flag value is %d", snapFlag)
+                    time.sleep(15)
+                    snapFlag = 0
 
             else:
 
@@ -128,6 +132,6 @@ if __name__ == '__main__':
 
 
     except KeyboardInterrupt:
-            print("Measurement stopped by user");
+            print("Measurement stopped by user")
 
 GPIO.cleanup()
