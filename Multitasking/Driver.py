@@ -10,25 +10,33 @@ if __name__ == '__main__':
         while True:
             distance = piSensorMTSK.distance()
             
+            startExec = time.time()
             
 
             if distance >2 and distance <40:
+
                 if snapFlag == 0:
-                    print("Intruder has been detetcted!")
+                    print("Intruder has been detetcted!",)
+                    print("sensor Time =", time.time()- startExec, "s\n")
                     print("Snapping picture of Intruder")
                     piSnapPicMTSK.takePicture()
                     piEmailPicMTSK.email()
                     print("email sent to user!")
-                    snapFlag = 1
+                    print("Execution Time =", time.time()-startExec,"s\n")
 
-                elif snapFlag == 1:
-                    print("Snap Flag Status:", snapFlag)
-                    time.sleep(60)
-                    snapFlag = 0
-        
+                    snapFlag = 1
+                    snapTimer = 0
+                else:
+                    snapTimer += 1                  
+                    if snapTimer == 15:
+                        snapFlag = 0
+                    print("Intruder Detected", distance, "cm", snapTimer,"s")
+                    time.sleep(1)
         
             else:
                 print("Measured Distance =", distance, "cm")
+                snapFlag = 0 
+                snapTimer = 0 #reset timer
                 time.sleep(1)
 			
             
