@@ -15,7 +15,7 @@ GPIO.setmode(GPIO.BOARD)
 Trigger = 18
 Echo = 24
 snapFlag = 0
-countPic = 0
+snapTimer = 0
 
 GPIO.setup(Trigger, GPIO.OUT)
 GPIO.setup(Echo, GPIO.IN)
@@ -37,17 +37,22 @@ def distance():
 
     TotalTime = End - Start
 
-    TotalDistance = (TotalTime * 34300)/2
+    TotalDistance = (TotalTime * 34300)/2    
 
     return TotalDistance
 
 def picture():
 
-	with picamera.PiCamera() as camera:
-		camera.resolution = (1280,720)
-		camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
+    picExec = time.time()
+    with picamera.PiCamera() as camera:
+        camera.resolution = (1280,720)
+        camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
+    print("Camera Time =", time.time()-picExec, "s\n")
+        
 
 def email():
+
+    emailExec = time.time()
 
     mailUser='compe571rpialerts@gmail.com'
     mailSender='compe571rpialerts@gmail.com'
@@ -89,46 +94,47 @@ def email():
     server.sendmail(mailUser,mailSender,text)
     server.quit()
 
+    print("Email Time =", time.time()-emailExec, "s\n")
 
 
 if __name__ == '__main__':
     try:
         while True:
+
+            startExec = time.time()
             dist = distance()
-
-
 
             if dist > 2 and dist < 40:
 
+                if snapFlag == 0: #snapFlag = 1 means an intruder is detected for the first time within 2 to 40 cm
+                                  #and enables camera and email functionalities
 
-                if snapFlag == 0:
-
-                    print("Intuder has been detected!")
+                    print("\nIntruder detected!", dist, "cm")
+                    print("Sensor Time =", time.time()-startExec, "s\n")
                     print("Snapping picture of Intruder")
                     picture() #calls picture() method
                     print("Sending email alert with pic to user")
                     email() #calls email() method
+                    print("Email sent!")    
+                    print("Execution Time =", time.time()-startExec, "s\n") #time elapsed from trigger send to email send
 
+                    snapFlag = 1 #disable camera and email fuctionalities
+                    snapTimer = 0 #reset the timer
+                
+                else:
+                    snapTimer += 1 #timer to keep track of how many seconds an intruder is detected for
+                    
+                    if snapTimer == 15: #if 15 seconds have passed and theres still an intruder
+                        snapFlag = 0 #reenable camera and email functionalities
 
-                    snapFlag = 1
-                    execTime = time.time()
-                    print("Execution Time = %d", execTime/1000)
-
-
-                elif snapFlag == 1:
-                    print("Snap Flag value is %d", snapFlag)
-                    time.sleep(15)
-                    snapFlag = 0
+                    print("Intruder detected!", dist, "cm,", snapTimer, "s")
+                    time.sleep(1)
 
             else:
-
-
                 print("Measured Distance =", dist, "cm")
+                snapFlag = 0 
+                snapTimer = 0 #reset timer
                 time.sleep(1)
-
-
-
-
 
 
     except KeyboardInterrupt:
