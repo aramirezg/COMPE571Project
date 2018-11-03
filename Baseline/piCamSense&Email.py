@@ -15,6 +15,9 @@ GPIO.setmode(GPIO.BOARD)
 Trigger = 18
 Echo = 24
 snapFlag = 0
+test
+countPic = 0
+master
 snapTimer = 0
 
 GPIO.setup(Trigger, GPIO.OUT)
@@ -47,7 +50,14 @@ def picture():
     with picamera.PiCamera() as camera:
         camera.resolution = (1280,720)
         camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
+test
+
+    cameraResponse = time.time()-picExec
+
+    return cameraResponse
+
     print("Camera Time =", time.time()-picExec, "s\n")
+master
         
 
 def email():
@@ -58,7 +68,7 @@ def email():
     mailSender='compe571rpialerts@gmail.com'
     subject='Alert!!'
 
-#MIME library formats from,to,and subject in email from variables above
+    #MIME library formats from,to,and subject in email from variables above
     message= MIMEMultipart()
     message['From'] = mailUser
     message['To'] = mailSender
@@ -73,17 +83,17 @@ def email():
 
     attachment = open(filename,'rb')
 
-#3 lines encode the attachment with MIME lib and encoders lib
+    #3 lines encode the attachment with MIME lib and encoders lib
     part = MIMEBase('application','octet-stream')
     part.set_payload((attachment).read())
     encoders.encode_base64(part)
 
-#this adds the info for the small preview in gmail
-#NOTE: "filename" variable as is must be defined as such for it to work
-#######always put your file in a "filename" variable no exeptions
+    #this adds the info for the small preview in gmail
+    #NOTE: "filename" variable as is must be defined as such for it to work
+    #######always put your file in a "filename" variable no exeptions
     part.add_header('Content-Disposition',"attachment; filename="+filename)
 
-#attach attachment and send with email protocols
+    #attach attachment and send with email protocols
     message.attach(part)
     text = message.as_string()
     server = smtplib.SMTP('smtp.gmail.com',587)
@@ -94,29 +104,53 @@ def email():
     server.sendmail(mailUser,mailSender,text)
     server.quit()
 
+test
+    emailResponse = time.time()-emailExec
+
+    return emailResponse
+
     print("Email Time =", time.time()-emailExec, "s\n")
+master
 
 
 if __name__ == '__main__':
     try:
         while True:
+test
+            startExec = time.time() #ultrasonic sensor
 
             startExec = time.time()
+master
             dist = distance()
 
             if dist > 2 and dist < 40:
 
                 if snapFlag == 0: #snapFlag = 1 means an intruder is detected for the first time within 2 to 40 cm
                                   #and enables camera and email functionalities
+test
+                    sensorResponse = time.time()-startExec
+                    print("\nIntruder detected!", dist, "cm")
+
 
                     print("\nIntruder detected!", dist, "cm")
                     print("Sensor Time =", time.time()-startExec, "s\n")
+master
                     print("Snapping picture of Intruder")
-                    picture() #calls picture() method
+                    cameraResponse = picture() #calls picture() method
                     print("Sending email alert with pic to user")
+test
+                    emailResponse = email() #calls email() method
+                    print("Email sent!\n")   
+                    print("Sensor Response Time:", sensorResponse)
+                    print("Camera Response Time:", cameraResponse) 
+                    print("Email Response Time:", emailResponse)
+                    print("Total Response Time =", sensorResponse + cameraResponse + emailResponse, "s\n") #time elapsed from ultrasonic sensor trigger to the end of email send
+                    
+
                     email() #calls email() method
                     print("Email sent!")    
                     print("Execution Time =", time.time()-startExec, "s\n") #time elapsed from trigger send to email send
+master
 
                     snapFlag = 1 #disable camera and email fuctionalities
                     snapTimer = 0 #reset the timer
