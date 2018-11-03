@@ -131,11 +131,6 @@ if __name__ == '__main__':
                     print("Camera Response Time:", cameraResponse) 
                     print("Email Response Time:", emailResponse)
                     print("Total Response Time =", sensorResponse + cameraResponse + emailResponse, "s\n") #time elapsed from ultrasonic sensor trigger to the end of email send
-                    
-
-                    email() #calls email() method
-                    print("Email sent!")    
-                    print("Execution Time =", time.time()-startExec, "s\n") #time elapsed from trigger send to email send
 
                     snapFlag = 1 #disable camera and email fuctionalities
                     snapTimer = 0 #reset the timer
