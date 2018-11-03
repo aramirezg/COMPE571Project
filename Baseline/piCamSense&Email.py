@@ -16,6 +16,7 @@ Trigger = 18
 Echo = 24
 snapFlag = 0
 countPic = 0
+snapTimer = 0
 
 GPIO.setup(Trigger, GPIO.OUT)
 GPIO.setup(Echo, GPIO.IN)
@@ -37,23 +38,31 @@ def distance():
 
     TotalTime = End - Start
 
-    TotalDistance = (TotalTime * 34300)/2
+    TotalDistance = (TotalTime * 34300)/2    
 
     return TotalDistance
 
 def picture():
 
-	with picamera.PiCamera() as camera:
-		camera.resolution = (1280,720)
-		camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
+    picExec = time.time()
+    with picamera.PiCamera() as camera:
+        camera.resolution = (1280,720)
+        camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
+
+    cameraResponse = time.time()-picExec
+
+    return cameraResponse
+        
 
 def email():
+
+    emailExec = time.time()
 
     mailUser='compe571rpialerts@gmail.com'
     mailSender='compe571rpialerts@gmail.com'
     subject='Alert!!'
 
-#MIME library formats from,to,and subject in email from variables above
+    #MIME library formats from,to,and subject in email from variables above
     message= MIMEMultipart()
     message['From'] = mailUser
     message['To'] = mailSender
@@ -68,17 +77,17 @@ def email():
 
     attachment = open(filename,'rb')
 
-#3 lines encode the attachment with MIME lib and encoders lib
+    #3 lines encode the attachment with MIME lib and encoders lib
     part = MIMEBase('application','octet-stream')
     part.set_payload((attachment).read())
     encoders.encode_base64(part)
 
-#this adds the info for the small preview in gmail
-#NOTE: "filename" variable as is must be defined as such for it to work
-#######always put your file in a "filename" variable no exeptions
+    #this adds the info for the small preview in gmail
+    #NOTE: "filename" variable as is must be defined as such for it to work
+    #######always put your file in a "filename" variable no exeptions
     part.add_header('Content-Disposition',"attachment; filename="+filename)
 
-#attach attachment and send with email protocols
+    #attach attachment and send with email protocols
     message.attach(part)
     text = message.as_string()
     server = smtplib.SMTP('smtp.gmail.com',587)
@@ -89,46 +98,52 @@ def email():
     server.sendmail(mailUser,mailSender,text)
     server.quit()
 
+    emailResponse = time.time()-emailExec
+
+    return emailResponse
 
 
 if __name__ == '__main__':
     try:
         while True:
+
+            startExec = time.time() #ultrasonic sensor
             dist = distance()
-
-
 
             if dist > 2 and dist < 40:
 
-
-                if snapFlag == 0:
-
-                    print("Intuder has been detected!")
+                if snapFlag == 0: #snapFlag = 1 means an intruder is detected for the first time within 2 to 40 cm
+                                  #and enables camera and email functionalities
+                    sensorResponse = time.time()-startExec
+                    print("\nIntruder detected!", dist, "cm")
                     print("Snapping picture of Intruder")
-                    picture() #calls picture() method
+                    cameraResponse = picture() #calls picture() method
                     print("Sending email alert with pic to user")
-                    email() #calls email() method
+                    emailResponse = email() #calls email() method
+                    print("Email sent!\n")   
+                    print("Sensor Response Time:", sensorResponse)
+                    print("Camera Response Time:", cameraResponse) 
+                    print("Email Response Time:", emailResponse)
+                    print("Total Response Time =", sensorResponse + cameraResponse + emailResponse, "s\n") #time elapsed from ultrasonic sensor trigger to the end of email send
+                    
 
+                    snapFlag = 1 #disable camera and email fuctionalities
+                    snapTimer = 0 #reset the timer
+                
+                else:
+                    snapTimer += 1 #timer to keep track of how many seconds an intruder is detected for
+                    
+                    if snapTimer == 15: #if 15 seconds have passed and theres still an intruder
+                        snapFlag = 0 #reenable camera and email functionalities
 
-                    snapFlag = 1
-                    execTime = time.time()
-                    print("Execution Time = %d", execTime/1000)
-
-
-                elif snapFlag == 1:
-                    print("Snap Flag value is %d", snapFlag)
-                    time.sleep(15)
-                    snapFlag = 0
+                    print("Intruder detected!", dist, "cm,", snapTimer, "s")
+                    time.sleep(1)
 
             else:
-
-
                 print("Measured Distance =", dist, "cm")
+                snapFlag = 0 
+                snapTimer = 0 #reset timer
                 time.sleep(1)
-
-
-
-
 
 
     except KeyboardInterrupt:
