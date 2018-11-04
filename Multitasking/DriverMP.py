@@ -3,12 +3,50 @@ import piEmailPicMTSK
 import piSnapPicMTSK
 import time
 
+import multiprocessing
+from multiprocessing import Pool
+
 snapFlag = 0
+
+#process1 = multiprocessing.Process(target=piSensorMTSK.distance())
+##process2 = multiprocessing.Process(target=piSnapPicMTSK.takePicture())
+##process3 = multiprocessing.Process(target=piEmailPicMTSK.email())
+##
+##process1.start()
+##process2.start()
+##process3.start()
+
+
+####NOTE FOR MULTITAKSING
+##really only two tasks:
+##perform a process for measuring distance
+##perform timeout as another process while detecting distace
+
+
+###possibly make recording a process??
+
 
 if __name__ == '__main__':
     try:
         while True:
+
+            process1 = multiprocessing.Process(target=piSensorMTSK.distance())
+##            process2 = multiprocessing.Process(target=piSnapPicMTSK.takePicture())
+##            process3 = multiprocessing.Process(target=piEmailPicMTSK.email())
+            
+            
+##
+##            process1.start()
+##            process2.start()
+##            process3.start()
+
+##            process1.join()
+##            process2.join()
+##            process3.join()
+            
+                        
             distance = piSensorMTSK.distance()
+            
             
             startExec = time.time()
             

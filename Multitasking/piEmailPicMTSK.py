@@ -4,11 +4,15 @@ from email.mime.text import MIMEText #library used to display text over email
 from email.mime.multipart import MIMEMultipart #library used to display a header in an e-mail
 from email.mime.base import MIMEBase #library used to deploy message in e-mail
 from email import encoders #library to use the encoders for attachment decoding and encoding
+import time
 
 def email():
+
+    emailExec = time.time()
+    
 #3 variables used for user,sender, and subject
-    mailUser='aswagisrad@gmail.com'
-    mailSender='aswagisrad@gmail.com'
+    mailUser='compe571rpialerts@gmail.com'
+    mailSender='compe571rpialerts@gmail.com'
     subject='Alert!!'
 
 #MIME library formats from,to,and subject in email from variables above
@@ -41,8 +45,10 @@ def email():
     text = message.as_string()
     server = smtplib.SMTP('smtp.gmail.com',587)
     server.starttls()
-    server.login(mailUser,'GOgoopy0926')
+    server.login(mailUser,'compe571project')
 
 
     server.sendmail(mailUser,mailSender,text)
     server.quit()
+
+    print("Email Time =", time.time()-emailExec, "s\n")
