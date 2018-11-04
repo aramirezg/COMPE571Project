@@ -107,9 +107,8 @@ def email():
 if __name__ == '__main__':
     try:
         while True:
-            startExec = time.time() #ultrasonic sensor
 
-            startExec = time.time()
+            startExec = time.time() #ultrasonic sensor
             dist = distance()
 
             if dist > 2 and dist < 40:
@@ -118,10 +117,6 @@ if __name__ == '__main__':
                                   #and enables camera and email functionalities
                     sensorResponse = time.time()-startExec
                     print("\nIntruder detected!", dist, "cm")
-
-
-                    print("\nIntruder detected!", dist, "cm")
-                    print("Sensor Time =", time.time()-startExec, "s\n")
                     print("Snapping picture of Intruder")
                     cameraResponse = picture() #calls picture() method
                     print("Sending email alert with pic to user")
