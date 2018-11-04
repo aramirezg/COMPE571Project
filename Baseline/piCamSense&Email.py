@@ -15,7 +15,6 @@ GPIO.setmode(GPIO.BOARD)
 Trigger = 18
 Echo = 24
 snapFlag = 0
-countPic = 0
 snapTimer = 0
 
 GPIO.setup(Trigger, GPIO.OUT)
