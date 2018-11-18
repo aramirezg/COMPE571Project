@@ -6,8 +6,8 @@ from email.mime.base import MIMEBase #library used to deploy message in e-mail
 from email import encoders #library to use the encoders for attachment decoding and encoding
 
 #3 variables used for user,sender, and subject
-mailUser='aswagisrad@gmail.com'
-mailSender='aswagisrad@gmail.com'
+mailUser='compe571rpiemailalerts@gmail.com'
+mailSender='compe571rpiemailalerts@gmail.com'
 subject='Alert!!'
 
 #MIME library formats from,to,and subject in email from variables above
@@ -40,7 +40,7 @@ message.attach(part)
 text = message.as_string()
 server = smtplib.SMTP('smtp.gmail.com',587)
 server.starttls()
-server.login(mailUser,'GOgoopy0926')
+server.login(mailUser,'compe571project')
 
 
 server.sendmail(mailUser,mailSender,text)
