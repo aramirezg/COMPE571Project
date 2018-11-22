@@ -115,6 +115,7 @@ if __name__ == '__main__':
 
                 if snapFlag == 0: #snapFlag = 1 means an intruder is detected for the first time within 2 to 40 cm
                                   #and enables camera and email functionalities
+                                  
                     sensorResponse = time.time()-startExec
                     print("\nIntruder detected!", dist, "cm")
                     print("Snapping picture of Intruder")
