@@ -3,6 +3,8 @@ import picamera
 import time
 import RPi.GPIO as GPIO
 
+import threading
+
 import smtplib   #library to import the simple mail transfer protocol
 from email.mime.text import MIMEText #library used to display text over email
 from email.mime.multipart import MIMEMultipart #library used to display a header in an e-mail
@@ -14,13 +16,27 @@ GPIO.setmode(GPIO.BOARD)
 
 Trigger = 18
 Echo = 24
-snapFlag = 0
-snapTimer = 0
+
+#mutex = threading.Lock()
+sendEmail = threading.Lock()
+cameraLock = threading.Lock()
+
+
+
+cameraCounter = 0
+mutex = 1
+takePic = 1
+cameraSem = threading.Semaphore()
+sensorSem = threading.Semaphore()
+
+sendEmail.acquire()
 
 GPIO.setup(Trigger, GPIO.OUT)
 GPIO.setup(Echo, GPIO.IN)
 
 def distance():
+
+    startExec = time.time()
 
     GPIO.output(Trigger, True)
     time.sleep(0.00001)
@@ -37,26 +53,67 @@ def distance():
 
     TotalTime = End - Start
 
-    TotalDistance = (TotalTime * 34300)/2    
+    TotalDistance = (TotalTime * 34300)/2
 
-    return TotalDistance
+    global mutex
+    global takePic
+    global cameraCounter
+
+    if(TotalDistance < 1 or TotalDistance > 40):
+        
+        sensorSem.acquire(1)
+        if(cameraCounter > 0):
+            cameraCounter = cameraCounter - 1
+        sensorSem.release()
+
+        print("we're here")
+            
+    else:
+        sensorSem.acquire(1)
+        cameraCounter = cameraCounter + 1
+        sensorSem.release()
+    
+    print("cameraCounter", cameraCounter)
+
+    sensorResponse = time.time()-startExec
+
+    print("Total Distance:", TotalDistance)
+    print("Sensor Response Time:", sensorResponse)
+
+    if(cameraCounter == 0):
+        cameraSem.acquire(takePic)
+    if(cameraCounter == 1):
+        cameraSem.release()
+
+    time.sleep(1)
+
 
 def picture():
 
+    cameraSem.acquire(takePic)
+
     picExec = time.time()
+
     with picamera.PiCamera() as camera:
         camera.resolution = (1280,720)
         camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
-
+    
     cameraResponse = time.time()-picExec
+    
+    cameraSem.release()
+
+    print("Camera Response Time:", cameraResponse)
+
+    time.sleep(1)
 
     return cameraResponse
-        
 
 def email():
 
-    emailExec = time.time()
+    sendEmail.acquire()
 
+    emailExec = time.time()
+    
     mailUser='compe571rpialerts@gmail.com'
     mailSender='compe571rpialerts@gmail.com'
     subject='Alert!!'
@@ -93,60 +150,39 @@ def email():
     server.starttls()
     server.login(mailUser,'compe571project')
 
-
     server.sendmail(mailUser,mailSender,text)
     server.quit()
 
+    sendEmail.release()
+
     emailResponse = time.time()-emailExec
+    print("Email Response Time:", emailResponse)
 
     return emailResponse
 
+if __name__ == '__main__':   
 
-
-
-if __name__ == '__main__':
     try:
-        while True:
-            startExec = time.time() #ultrasonic sensor
 
-            startExec = time.time()
-            dist = distance()
+        while 1:
+            t = time.time()
+        
+            t1 = threading.Thread(target=distance)
+            t2 = threading.Thread(target=picture)
+            t3 = threading.Thread(target=email)
 
-            if dist > 2 and dist < 40:
 
-                if snapFlag == 0: #snapFlag = 1 means an intruder is detected for the first time within 2 to 40 cm
-                                  #and enables camera and email functionalities
+            t1.start()
+            t2.start()
+            t3.start()
+            
+##            t1.join()
+##            t2.join()
+##            t3.join()
 
-                    sensorResponse = time.time()-startExec
-                    print("\nIntruder detected!", dist, "cm")
-                    print("Snapping picture of Intruder")
-                    cameraResponse = picture() #calls picture() method
-                    print("Sending email alert with pic to user")
-                    emailResponse = email() #calls email() method
-                    print("Email sent!\n")   
-                    print("Sensor Response Time:", sensorResponse)
-                    print("Camera Response Time:", cameraResponse) 
-                    print("Email Response Time:", emailResponse)
-                    print("Total Response Time =", sensorResponse + cameraResponse + emailResponse, "s\n") #time elapsed from ultrasonic sensor trigger to the end of email send
+##            print("Multithreading done in:", time.time()-t)
 
-                    snapFlag = 1 #disable camera and email fuctionalities
-                    snapTimer = 0 #reset the timer
-                
-                else:
-                    snapTimer += 1 #timer to keep track of how many seconds an intruder is detected for
-                    
-                    if snapTimer == 15: #if 15 seconds have passed and theres still an intruder
-                        snapFlag = 0 #reenable camera and email functionalities
-
-                    print("Intruder detected!", dist, "cm,", snapTimer, "s")
-                    time.sleep(1)
-
-            else:
-                print("Measured Distance =", dist, "cm")
-                snapFlag = 0 
-                snapTimer = 0 #reset timer
-                time.sleep(1)
-
+            time.sleep(1)
 
     except KeyboardInterrupt:
             print("Measurement stopped by user")

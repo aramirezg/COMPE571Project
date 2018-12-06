@@ -107,9 +107,8 @@ def email():
 if __name__ == '__main__':
     try:
         while True:
-            startExec = time.time() #ultrasonic sensor
 
-            startExec = time.time()
+            startExec = time.time() #ultrasonic sensor
             dist = distance()
 
             if dist > 2 and dist < 40:
