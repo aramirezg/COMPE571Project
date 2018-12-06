@@ -1,6 +1,7 @@
 #THIS CODE IS TO GIVE FUNCTION TO THE SENSOR
 import RPi.GPIO as GPIO
 import time
+import os
 
 GPIO.setmode(GPIO.BOARD)
 
@@ -11,6 +12,7 @@ Echo = 24
 
 GPIO.setup(Trigger, GPIO.OUT)
 GPIO.setup(Echo, GPIO.IN)
+
 
 
 def distance():
@@ -38,6 +40,7 @@ def distance():
     TotalDistance = (Totaltime * 34300)/2
     
     return TotalDistance
+    #os._exit(0)
 
 ##if __name__ == '__main__':
 ##    try:
