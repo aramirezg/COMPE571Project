@@ -114,7 +114,7 @@ if __name__ == '__main__':
             if dist > 2 and dist < 40:
 
                 if snapFlag == 0: #snapFlag = 1 means an intruder is detected for the first time within 2 to 40 cm
-                                  #and enables camera and email functionalities
+                                  #and disables camera and email functionalities
                                   
                     sensorResponse = time.time()-startExec
                     print("\nIntruder detected!", dist, "cm")
@@ -123,10 +123,11 @@ if __name__ == '__main__':
                     print("Sending email alert with pic to user")
                     emailResponse = email() #calls email() method
                     print("Email sent!\n")   
+                    print("System Response Time:", time.time()-startExec, "s\n")
                     print("Sensor Response Time:", sensorResponse)
                     print("Camera Response Time:", cameraResponse) 
                     print("Email Response Time:", emailResponse)
-                    print("Total Response Time =", sensorResponse + cameraResponse + emailResponse, "s\n") #time elapsed from ultrasonic sensor trigger to the end of email send
+                    #print("Total Response Time =", sensorResponse + cameraResponse + emailResponse, "s\n") #time elapsed from ultrasonic sensor trigger to the end of email send
 
                     snapFlag = 1 #disable camera and email fuctionalities
                     snapTimer = 0 #reset the timer
