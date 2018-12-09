@@ -11,32 +11,25 @@ from email.mime.multipart import MIMEMultipart #library used to display a header
 from email.mime.base import MIMEBase #library used to deploy message in e-mail
 from email import encoders #library to use the encoders for attachment decoding and encoding
 
-
 GPIO.setmode(GPIO.BOARD)
 
 Trigger = 18
 Echo = 24
 
-#mutex = threading.Lock()
-sendEmail = threading.Lock()
-cameraLock = threading.Lock()
-
-
-
-cameraCounter = 0
-mutex = 1
-takePic = 1
-cameraSem = threading.Semaphore()
-sensorSem = threading.Semaphore()
-
-sendEmail.acquire()
-
 GPIO.setup(Trigger, GPIO.OUT)
 GPIO.setup(Echo, GPIO.IN)
 
+cameraCount = 0
+
+inRange = threading.Event()
+picTaken = threading.Event()
+
+mutex = threading.Semaphore()
+sharedPic = threading.Semaphore()
+
 def distance():
 
-    startExec = time.time()
+    global cameraCount
 
     GPIO.output(Trigger, True)
     time.sleep(0.00001)
@@ -55,65 +48,41 @@ def distance():
 
     TotalDistance = (TotalTime * 34300)/2
 
-    global mutex
-    global takePic
-    global cameraCounter
+    mutex.acquire(1)
 
     if(TotalDistance < 1 or TotalDistance > 40):
+        cameraCount = 0
+        inRange.clear()
         
-        sensorSem.acquire(1)
-        if(cameraCounter > 0):
-            cameraCounter = cameraCounter - 1
-        sensorSem.release()
-
-        print("we're here")
-            
     else:
-        sensorSem.acquire(1)
-        cameraCounter = cameraCounter + 1
-        sensorSem.release()
-    
-    print("cameraCounter", cameraCounter)
+        cameraCount = cameraCount + 1
+        inRange.set()
 
-    sensorResponse = time.time()-startExec
+    mutex.release()
 
-    print("Total Distance:", TotalDistance)
-    print("Sensor Response Time:", sensorResponse)
-
-    if(cameraCounter == 0):
-        cameraSem.acquire(takePic)
-    if(cameraCounter == 1):
-        cameraSem.release()
-
-    time.sleep(1)
-
+    print("Sensor Done")
+    print("cameraCount =", cameraCount)
 
 def picture():
-
-    cameraSem.acquire(takePic)
-
-    picExec = time.time()
-
+    global cameraCount
+    
     with picamera.PiCamera() as camera:
         camera.resolution = (1280,720)
-        camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
+
+        sharedPic.acquire(1)
+
+        if(inRange.isSet() and (cameraCount == 1 or not cameraCount%10)):
+            camera.capture("/home/pi/python_code/email_pics/imageTest.jpg")
+            picTaken.set()
+            print("Picture Taken")
+        else:
+            picTaken.clear()
+
+        sharedPic.release()
     
-    cameraResponse = time.time()-picExec
-    
-    cameraSem.release()
-
-    print("Camera Response Time:", cameraResponse)
-
-    time.sleep(1)
-
-    return cameraResponse
 
 def email():
 
-    sendEmail.acquire()
-
-    emailExec = time.time()
-    
     mailUser='compe571rpialerts@gmail.com'
     mailSender='compe571rpialerts@gmail.com'
     subject='Alert!!'
@@ -124,63 +93,66 @@ def email():
     message['To'] = mailSender
     message['Subject'] = subject
 
-
     body = '!!!Alert an intruder has been detected! Check the picture out'
     message.attach (MIMEText(body,'plain')) #message body is attached by MIME as plain text
 
+    #3 lines encode the attachment with MIME lib and encoders lib
+    part = MIMEBase('application','octet-stream')
 
     filename= '/home/pi/python_code/email_pics/imageTest.jpg' #this states the path where the filename is attached
 
-    attachment = open(filename,'rb')
+    sharedPic.acquire(1)
 
-    #3 lines encode the attachment with MIME lib and encoders lib
-    part = MIMEBase('application','octet-stream')
-    part.set_payload((attachment).read())
-    encoders.encode_base64(part)
+    if(picTaken.isSet()):
 
-    #this adds the info for the small preview in gmail
-    #NOTE: "filename" variable as is must be defined as such for it to work
-    #######always put your file in a "filename" variable no exeptions
-    part.add_header('Content-Disposition',"attachment; filename="+filename)
+        attachment = open(filename,'rb')
 
-    #attach attachment and send with email protocols
-    message.attach(part)
-    text = message.as_string()
-    server = smtplib.SMTP('smtp.gmail.com',587)
-    server.starttls()
-    server.login(mailUser,'compe571project')
+        #3 lines encode the attachment with MIME lib and encoders lib
+        part.set_payload((attachment).read())
+        encoders.encode_base64(part)
 
-    server.sendmail(mailUser,mailSender,text)
-    server.quit()
+        #this adds the info for the small preview in gmail
+        #NOTE: "filename" variable as is must be defined as such for it to work
+        #######always put your file in a "filename" variable no exeptions
+        part.add_header('Content-Disposition',"attachment; filename="+filename)
 
-    sendEmail.release()
+        #attach attachment and send with email protocols
+        message.attach(part)
+        text = message.as_string()
+        server = smtplib.SMTP('smtp.gmail.com',587)
+        server.starttls()
+        server.login(mailUser,'compe571project')
 
-    emailResponse = time.time()-emailExec
-    print("Email Response Time:", emailResponse)
+        server.sendmail(mailUser,mailSender,text)
+        server.quit()
 
-    return emailResponse
+        print("Email sent!")
+
+    sharedPic.release()
 
 if __name__ == '__main__':   
 
     try:
 
         while 1:
-            t = time.time()
         
             t1 = threading.Thread(target=distance)
             t2 = threading.Thread(target=picture)
             t3 = threading.Thread(target=email)
 
+            
 
+            t = time.time()
             t1.start()
             t2.start()
             t3.start()
-            
-##            t1.join()
-##            t2.join()
-##            t3.join()
 
-##            print("Multithreading done in:", time.time()-t)
+            t1.join()
+            t2.join()
+            t3.join()
+
+            print("Multithreading done in:", time.time()-t)
+            print("")
 
             time.sleep(1)
 
