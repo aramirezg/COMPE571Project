@@ -5,6 +5,7 @@ from email.mime.multipart import MIMEMultipart #library used to display a header
 from email.mime.base import MIMEBase #library used to deploy message in e-mail
 from email import encoders #library to use the encoders for attachment decoding and encoding
 import time
+import multiprocessing
 
 def email():
 

@@ -1,7 +1,7 @@
 #THIS CODE IS TO GIVE FUNCTION TO THE SENSOR
 import RPi.GPIO as GPIO
 import time
-import os
+import multiprocessing
 
 GPIO.setmode(GPIO.BOARD)
 
@@ -15,7 +15,7 @@ GPIO.setup(Echo, GPIO.IN)
 
 
 
-def distance():
+def distance(dist):
     
     #Alternates the timer for the Trigger to signal out every .01ms
     #PWM/Time signal is sent through trigger
@@ -37,10 +37,11 @@ def distance():
     
     Totaltime = Stop - Start
     
-    TotalDistance = (Totaltime * 34300)/2
+    #TotalDistance = (Totaltime * 34300)/2
+    dist.value = (Totaltime * 34300)/2
+
+    #return TotalDistance
     
-    return TotalDistance
-    #os._exit(0)
 
 ##if __name__ == '__main__':
 ##    try:

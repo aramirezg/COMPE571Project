@@ -1,7 +1,7 @@
 #THIS GIVES THE FUNCTION OF TAKING A PICTURE WITH THE PI
 import picamera
 import time
-import os
+import multiprocessing
 
 def takePicture():
 
@@ -13,7 +13,6 @@ def takePicture():
         camera.capture("/home/pi/Desktop/imageTest.jpg")
     print("Camera time", time.time() - taskExec, "s\n")
     print("Took Picture")
-    os._exit(0)
     
     
     
